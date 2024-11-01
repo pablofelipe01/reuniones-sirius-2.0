@@ -139,6 +139,7 @@ const VoiceRecorder: React.FC = () => {
 
   return (
     <div
+    className="flex items-center justify-center min-h-screen w-full"
     
   >
     <div className="p-4 max-w-md w-full bg-white bg-opacity-80 rounded-lg shadow-lg">
