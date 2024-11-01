@@ -104,7 +104,7 @@ const VoiceRecorder: React.FC = () => {
     formData.append('file', audioBlob, `${nombreArchivo}.wav`);
 
     try {
-      const response = await fetch('https://tok-n8n-sol.onrender.com/webhook-test/10cad20c-8354-481d-913b-11ed72a9a1c9', {
+      const response = await fetch('https://tok-n8n-sol.onrender.com/webhook/10cad20c-8354-481d-913b-11ed72a9a1c9', {
         method: 'POST',
         body: formData,
       });
@@ -193,8 +193,8 @@ const VoiceRecorder: React.FC = () => {
             >
               <option value="Operador: Yesenia">Yesenia</option>
               <option value="Operador: Angi">Angi</option>
-              <option value="Operador: Liliana">Liliana</option>
-              <option value="Operador: Liliana">Alexandra</option>
+              <option value="Operador: Luisa">Luisa</option>
+              <option value="Operador: Alexandra">Alexandra</option>
             </select>
             <button
               onClick={manejarDescarga}
