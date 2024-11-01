@@ -3,25 +3,18 @@ import VoiceRecorder from "../../components/VoiceRecorder";
 
 export default function Home() {
   return (
-    <div
-      // style={{
-      //   display: "flex",
-      //   height: "100vh",
-      //   alignItems: "center",
-      //   justifyContent: "center",
-      //   flexDirection: "column",
-      //   textAlign: "center",
-      // }}
+    <div 
+    
+    className="flex items-center justify-center min-h-screen w-full"
+    style={{
+      backgroundImage: "url('/h6.jpeg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    }}
     >
     
-      <div
-        style={{
-          padding: "20px",
-          backgroundColor: "#000000",
-          borderRadius: "10px",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-        }}
-      >
+      <div >
         <VoiceRecorder />
       </div>
     </div>
