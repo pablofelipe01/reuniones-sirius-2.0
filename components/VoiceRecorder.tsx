@@ -167,7 +167,9 @@ const VoiceRecorder: React.FC = () => {
     <li>💧 <strong>Humedad:</strong> porcentaje de humedad en el cuarto</li>
     <li>📦 <strong>Estibas:</strong> de qué estibas a qué estibas se guardaron las bolsas</li>
     <li>🧬 <strong>Primera cepa utilizada: </strong> EJ: 231024TR </li>
-    <li>🧬 <strong>Cantidad:</strong> EJ: 5bolsas</li>
+    <li>🧬 <strong>Cantidad:</strong> EJ: 5 bolsas</li>
+    <li>🧬 <strong>Segunda Cepa utilizada.... Hasta la 4ta: </strong> EJ: 231024TR </li>
+    <li>🧬 <strong>Cantidad:</strong> EJ: 4 bolsas</li>
   </ul>
         
         <button
