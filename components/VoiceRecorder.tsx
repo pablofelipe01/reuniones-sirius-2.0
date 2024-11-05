@@ -159,7 +159,54 @@ const VoiceRecorder: React.FC = () => {
 
         <i className="fas fa-microphone-alt text-6xl mb-2" style={{ color: "darkblue" }}></i>
         <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
-  <ul className="text-xl list-disc list-inside mt-4" style={{ color: 'darkblue' }}>
+
+        <ul class="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
+        <h2 class="text-3xl mb-2 text-darkblue">PRIMARIOS</h2>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🛑</span>
+    <span><strong>Esterilización:</strong> número de bolsas</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🦠</span>
+    <span><strong>Inoculación:</strong> número de bolsas</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🦠</span>
+    <span><strong>Tipo de Inoculación:</strong> Duplicación / Producción</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🏠</span>
+    <span><strong>Cuarto:</strong> cuarto al que irán las bolsas</span>
+  </li>
+
+</ul>
+
+<ul class="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
+
+  <h2 class="text-3xl mb-2 text-darkblue">CEPAS</h2>
+
+  
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🧬</span>
+    <span class="ml-2"><strong>Tipo de Cepa:</strong> Madre / Cepita</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🧬</span>
+    <span class="ml-2"><strong>Primera cepa utilizada:</strong> EJ: 231024TR</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🧬</span>
+    <span class="ml-2"><strong>Cantidad:</strong> EJ: 5 bolsas</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🧬</span>
+    <span class="ml-2"><strong>Repetir Proceso:</strong> Máximo 4</span>
+  </li>
+ 
+</ul>
+
+
+  {/* <ul className="text-xl list-disc list-inside mt-4" style={{ color: 'darkblue' }}>
     <li>🛑 <strong>Esterilización:</strong> número de bolsas</li>
     <li>🦠 <strong>Inoculación:</strong> número de bolsas</li>
     <li>🦠 <strong>Tipo de Inoculación:</strong> Duplicación / Producción</li>
@@ -175,7 +222,7 @@ const VoiceRecorder: React.FC = () => {
       <br />
     <li>🧬 <strong>Repetir Proceso: </strong>Maximo 4</li>
   
-  </ul>
+  </ul> */}
         
         <button
           onClick={iniciarGrabacion}
