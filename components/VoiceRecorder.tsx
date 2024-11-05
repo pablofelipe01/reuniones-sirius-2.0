@@ -162,11 +162,12 @@ const VoiceRecorder: React.FC = () => {
   <ul className="text-xl list-disc list-inside mt-4" style={{ color: 'darkblue' }}>
     <li>🛑 <strong>Esterilización:</strong> número de bolsas</li>
     <li>🦠 <strong>Inoculación:</strong> número de bolsas</li>
-    <li>📦 <strong>Estibas:</strong> de qué estibas a qué estibas se guardaron las bolsas</li>
-    <li>🧬 <strong>Cepas:</strong> cantidades y códigos de las cepas utilizadas</li>
     <li>🏠 <strong>Cuarto:</strong> cuarto al que irán las bolsas</li>
     <li>🌡️ <strong>Temperatura:</strong> número de temperatura</li>
     <li>💧 <strong>Humedad:</strong> porcentaje de humedad en el cuarto</li>
+    <li>📦 <strong>Estibas:</strong> de qué estibas a qué estibas se guardaron las bolsas</li>
+    <li>🧬 <strong>Primera cepa utilizada: </strong> EJ: 231024TR </li>
+    <li>🧬 <strong>Cantidad:</strong> EJ: 5bolsas</li>
   </ul>
         
         <button
