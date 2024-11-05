@@ -178,6 +178,18 @@ const VoiceRecorder: React.FC = () => {
     <span class="w-6 flex-shrink-0">🏠</span>
     <span><strong>Cuarto:</strong> cuarto al que irán las bolsas</span>
   </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">🌡️</span>
+    <span><strong>Temperatura:</strong> temperatura del cuarto</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">💧</span>
+    <span><strong>Humedad:</strong> % de Humedad</span>
+  </li>
+  <li class="flex items-start">
+    <span class="w-6 flex-shrink-0">📦 </span>
+    <span><strong>Estibas:</strong> de qué estibas a qué estibas se guardaron las bolsas</span>
+  </li>
 
 </ul>
 
