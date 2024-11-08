@@ -8,51 +8,70 @@ const VoiceRecorder: React.FC = () => {
   const [urlAudio, setUrlAudio] = useState<string | null>(null);
   const [nombreArchivo, setNombreArchivo] = useState<string>("Operador: ");
   const audioContextRef = useRef<AudioContext | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recorderRef = useRef<any>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const requestAnimationFrameRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const iniciarGrabacion = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    // @ts-ignore
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    audioContextRef.current = audioContext;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
-    const source = audioContext.createMediaStreamSource(stream);
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    analyserRef.current = analyser;
+      // Dynamically import RecordRTC
+      const { default: RecordRTC } = await import('recordrtc');
 
-    source.connect(analyser);
+      // Initialize audio context for waveform visualization
+      // @ts-ignore
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = audioContext;
 
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = mediaRecorder;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      analyserRef.current = analyser;
 
-    mediaRecorder.ondataavailable = (event: BlobEvent) => {
-      audioChunksRef.current.push(event.data);
-    };
+      source.connect(analyser);
 
-    mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
-      const url = URL.createObjectURL(audioBlob);
-      setUrlAudio(url);
-      audioChunksRef.current = [];
-    };
+      // Initialize RecordRTC
+      const recorder = new RecordRTC(stream, {
+        type: 'audio',
+        mimeType: 'audio/wav',
+        recorderType: RecordRTC.StereoAudioRecorder,
+        desiredSampRate: 16000,
+        numberOfAudioChannels: 1,
+      });
+      recorder.startRecording();
+      recorderRef.current = recorder;
 
-    mediaRecorder.start();
-    setEstaGrabando(true);
+      setEstaGrabando(true);
 
-    dibujarFormaDeOnda();
+      dibujarFormaDeOnda();
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert('No se pudo acceder al micrófono. Por favor, verifica los permisos.');
+    }
   };
 
-  const detenerGrabacion = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
+  const detenerGrabacion = async () => {
+    if (recorderRef.current) {
+      await recorderRef.current.stopRecording();
+      const blob = await recorderRef.current.getBlob();
+      const url = URL.createObjectURL(blob);
+      setUrlAudio(url);
+
+      // Clean up
+      recorderRef.current = null;
+      setEstaGrabando(false);
+      cancelAnimationFrame(requestAnimationFrameRef.current!);
+
+      // Stop all tracks
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
     }
-    setEstaGrabando(false);
-    cancelAnimationFrame(requestAnimationFrameRef.current!);
   };
 
   const dibujarFormaDeOnda = () => {
@@ -60,7 +79,7 @@ const VoiceRecorder: React.FC = () => {
     const canvas = canvasRef.current;
     if (!analyser || !canvas) return;
 
-    const bufferLength = analyser.frequencyBinCount;
+    const bufferLength = analyser.fftSize;
     const dataArray = new Uint8Array(bufferLength);
     const ctx = canvas.getContext("2d");
 
@@ -69,10 +88,11 @@ const VoiceRecorder: React.FC = () => {
 
       analyser.getByteTimeDomainData(dataArray);
 
-      ctx!.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
+      ctx!.fillStyle = "white";
+      ctx!.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx!.lineWidth = 2;
-      ctx!.strokeStyle = "rgb(255, 0, 0)"; // Línea roja
+      ctx!.strokeStyle = "rgb(255, 0, 0)"; // Red line
 
       ctx!.beginPath();
       const sliceWidth = (canvas.width * 1.0) / bufferLength;
@@ -110,6 +130,8 @@ const VoiceRecorder: React.FC = () => {
 
       if (!response.ok) {
         console.error('Error al enviar el archivo al webhook.');
+      } else {
+        console.log('Archivo enviado exitosamente al webhook.');
       }
     } catch (error) {
       console.error('Error al enviar archivo al webhook:', error);
@@ -122,7 +144,7 @@ const VoiceRecorder: React.FC = () => {
       const audioBlob = await response.blob();
       await enviarAlWebhook(audioBlob);
 
-      // Iniciar descarga del archivo
+      // Initiate file download
       const link = document.createElement('a');
       link.href = urlAudio;
       link.download = `${encodeURIComponent(nombreArchivo || "grabacion")}.wav`;
@@ -137,129 +159,80 @@ const VoiceRecorder: React.FC = () => {
   };
 
   return (
-    <div
-    className="flex items-center justify-center min-h-screen w-full"
-    
-  >
-    <div className="p-4 max-w-md w-full bg-white bg-opacity-80 rounded-lg shadow-lg">
-      <h1 style={{ fontSize: "2rem", marginBottom: "20px", textAlign: "center", color: "darkblue", fontWeight: "bold" }}>
-        🎤 Data Lab IA
-      </h1>
-      <canvas ref={canvasRef} width={300} height={80} className="w-full mb-4" />
-      <div className="mb-6 flex flex-col space-y-4 items-center">
-      <Image
-  src="/logo.png" // Asegúrate de que esté en la carpeta `public`
-  alt="Logo"
-  width={96} // Ajusta el tamaño según lo necesites
-  height={96}
-  className="mb-4 object-contain rounded-lg" // Usa `rounded-full` para un círculo
-/>
-
-        <i className="fas fa-microphone-alt text-6xl mb-2" style={{ color: "darkblue" }}></i>
-        <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
-
-        <ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
-        <h2 className="text-3xl mb-2 text-darkblue">PRIMARIOS</h2>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🛑</span>
-    <span><strong>Esterilización:</strong> número de bolsas</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🦠</span>
-    <span><strong>Inoculación:</strong> número de bolsas</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🦠</span>
-    <span><strong>Tipo de Inoculación:</strong> Duplicación / Producción</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🏠</span>
-    <span><strong>Cuarto:</strong> cuarto al que irán las bolsas</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🌡️</span>
-    <span><strong>Temperatura:</strong> temperatura del cuarto</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">💧</span>
-    <span><strong>Humedad:</strong> % de Humedad</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">📦 </span>
-    <span><strong>Estibas:</strong> de qué estibas a qué estibas se guardaron las bolsas</span>
-  </li>
-</ul>
-
-<ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
-  <h2 className="text-3xl mb-2 text-darkblue">CEPAS</h2>
-  
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🧬</span>
-    <span className="ml-2"><strong>Tipo de Cepa:</strong> Madre / Cepita</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🧬</span>
-    <span className="ml-2"><strong>Primera cepa utilizada:</strong> EJ: 231024TR</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🧬</span>
-    <span className="ml-2"><strong>Cantidad:</strong> EJ: 5 bolsas</span>
-  </li>
-  <li className="flex items-start">
-    <span className="w-6 flex-shrink-0">🧬</span>
-    <span className="ml-2"><strong>Repetir Proceso:</strong> Máximo 4</span>
-  </li>
-</ul>
-        
-        <button
-          onClick={iniciarGrabacion}
-          disabled={estaGrabando}
-          className="px-4 py-2 bg-green-500 text-white rounded-full shadow-lg disabled:bg-gray-400 w-full sm:w-auto transform transition-transform duration-200 active:scale-95"
+    <div className="flex items-center justify-center min-h-screen w-full">
+      <div className="p-4 max-w-md w-full bg-white bg-opacity-80 rounded-lg shadow-lg">
+        <h1
+          style={{
+            fontSize: "2rem",
+            marginBottom: "20px",
+            textAlign: "center",
+            color: "darkblue",
+            fontWeight: "bold",
+          }}
         >
-          Iniciar
-        </button>
-        <button
-          onClick={detenerGrabacion}
-          disabled={!estaGrabando}
-          className="px-4 py-2 bg-red-500 text-white rounded-full shadow-lg disabled:bg-gray-400 w-full sm:w-auto transform transition-transform duration-200 active:scale-95"
-        >
-          Stop
-        </button>
+          🎤 Data Lab IA
+        </h1>
+        <canvas ref={canvasRef} width={300} height={80} className="w-full mb-4" />
+        <div className="mb-6 flex flex-col space-y-4 items-center">
+          <Image
+            src="/logo.png" // Ensure the image is in the `public` folder
+            alt="Logo"
+            width={96}
+            height={96}
+            className="mb-4 object-contain rounded-lg"
+          />
+
+          {/* ... Your instruction list ... */}
+
+          <button
+            onClick={iniciarGrabacion}
+            disabled={estaGrabando}
+            className="px-4 py-2 bg-green-500 text-white rounded-full shadow-lg disabled:bg-gray-400 w-full sm:w-auto transform transition-transform duration-200 active:scale-95"
+          >
+            Iniciar
+          </button>
+          <button
+            onClick={detenerGrabacion}
+            disabled={!estaGrabando}
+            className="px-4 py-2 bg-red-500 text-white rounded-full shadow-lg disabled:bg-gray-400 w-full sm:w-auto transform transition-transform duration-200 active:scale-95"
+          >
+            Stop
+          </button>
+          {urlAudio && (
+            <>
+              <select
+                id="nombreArchivo"
+                value={nombreArchivo}
+                onChange={(e) => setNombreArchivo(e.target.value)}
+                className="px-2 py-1 border border-gray-300 rounded text-black mt-2"
+              >
+                <option value="Operador: Yesenia">Yesenia</option>
+                <option value="Operador: Angi">Angi</option>
+                <option value="Operador: Luisa">Luisa</option>
+                <option value="Operador: Alexandra">Alexandra</option>
+              </select>
+              <button
+                onClick={manejarDescarga}
+                className="mt-4 inline-block px-4 py-2 bg-indigo-500 text-white rounded-full shadow-lg w-full text-center sm:w-auto transform transition-transform duration-200 active:scale-95"
+              >
+                Enviar Registro
+              </button>
+              <button
+                onClick={recargarPagina}
+                className="px-4 py-2 bg-yellow-500 text-white rounded-full shadow-lg w-full sm:w-auto mt-4 transform transition-transform duration-200 active:scale-95"
+              >
+                Nuevo Registro
+              </button>
+            </>
+          )}
+        </div>
         {urlAudio && (
-          <>
-            <select
-              id="nombreArchivo"
-              value={nombreArchivo}
-              onChange={(e) => setNombreArchivo(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-black mt-2"
-            >
-              <option value="Operador: Yesenia">Yesenia</option>
-              <option value="Operador: Angi">Angi</option>
-              <option value="Operador: Luisa">Luisa</option>
-              <option value="Operador: Alexandra">Alexandra</option>
-            </select>
-            <button
-              onClick={manejarDescarga}
-              className="mt-4 inline-block px-4 py-2 bg-indigo-500 text-white rounded-full shadow-lg w-full text-center sm:w-auto transform transition-transform duration-200 active:scale-95"
-            >
-              Enviar Registro
-            </button>
-            <button
-              onClick={recargarPagina}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-full shadow-lg w-full sm:w-auto mt-4 transform transition-transform duration-200 active:scale-95"
-            >
-              Nuevo Registro
-            </button>
-          </>
+          <div className="mt-6">
+            <audio src={urlAudio} controls className="w-full" />
+          </div>
         )}
       </div>
-      {urlAudio && (
-        <div className="mt-6">
-          <audio src={urlAudio} controls className="w-full" />
-        </div>
-      )}
     </div>
-  </div>
   );
 };
 

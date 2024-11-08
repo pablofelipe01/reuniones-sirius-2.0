@@ -1,5 +1,6 @@
 "use client";
 import VoiceRecorder from "../../components/VoiceRecorder";
+import N8nFormTrigger from "../../components/N8nFormTrigger";
 
 export default function Home() {
   return (
@@ -16,6 +17,7 @@ export default function Home() {
     
       <div >
         <VoiceRecorder />
+        <N8nFormTrigger />
       </div>
     </div>
   );
