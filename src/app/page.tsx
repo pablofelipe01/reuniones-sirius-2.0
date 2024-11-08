@@ -17,7 +17,7 @@ export default function Home() {
     
       <div >
         <VoiceRecorder />
-        <N8nFormTrigger />
+        {/* <N8nFormTrigger /> */}
       </div>
     </div>
   );

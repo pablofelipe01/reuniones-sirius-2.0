@@ -182,7 +182,60 @@ const VoiceRecorder: React.FC = () => {
             className="mb-4 object-contain rounded-lg"
           />
 
-          {/* ... Your instruction list ... */}
+          <i className="fas fa-microphone-alt text-6xl mb-2" style={{ color: "darkblue" }}></i>
+          <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
+
+          <ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
+            <h2 className="text-3xl mb-2 text-darkblue">PRIMARIOS</h2>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🛑</span>
+              <span><strong>Esterilización:</strong> número de bolsas</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🦠</span>
+              <span><strong>Inoculación:</strong> número de bolsas</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🦠</span>
+              <span><strong>Tipo de Inoculación:</strong> Duplicación / Producción</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🏠</span>
+              <span><strong>Cuarto:</strong> cuarto al que irán las bolsas</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🌡️</span>
+              <span><strong>Temperatura:</strong> temperatura del cuarto</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">💧</span>
+              <span><strong>Humedad:</strong> % de Humedad</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">📦 </span>
+              <span><strong>Estibas:</strong> de qué estibas a qué estibas se guardaron las bolsas</span>
+            </li>
+          </ul>
+
+          <ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
+            <h2 className="text-3xl mb-2 text-darkblue">CEPAS</h2>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🧬</span>
+              <span className="ml-2"><strong>Tipo de Cepa:</strong> Madre / Cepita</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🧬</span>
+              <span className="ml-2"><strong>Primera cepa utilizada:</strong> EJ: 231024TR</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🧬</span>
+              <span className="ml-2"><strong>Cantidad:</strong> EJ: 5 bolsas</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-6 flex-shrink-0">🧬</span>
+              <span className="ml-2"><strong>Repetir Proceso:</strong> Máximo 4</span>
+            </li>
+          </ul>
 
           <button
             onClick={iniciarGrabacion}
