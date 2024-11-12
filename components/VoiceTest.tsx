@@ -256,6 +256,7 @@ const VoiceTest: React.FC = () => {
             <li className="flex items-start"><span className="w-6 flex-shrink-0">♻️</span><span><strong>Refill: 🔊 ________</strong></span></li>
             <li className="flex items-start"><span className="w-6 flex-shrink-0">🛢️</span><span><strong>Filtrado de aceite: 🔊 Si o No</strong></span></li>
             <li className="flex items-start"><span className="w-6 flex-shrink-0">🍟</span><span><strong>Cantidad de freídos: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🗣️</span><span><strong>Observaciones: 🔊 ________</strong></span></li>
           </ul>
 
           <button
