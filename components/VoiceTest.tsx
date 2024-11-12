@@ -1,10 +1,10 @@
-// components/VoiceRecorder.tsx
+// components/VoiceTest.tsx
 "use client";
 
 import React, { useState, useRef } from "react";
 import Image from 'next/image';
 
-const VoiceRecorder: React.FC = () => {
+const VoiceTest: React.FC = () => {
   const [estaGrabando, setEstaGrabando] = useState<boolean>(false);
   const [urlAudio, setUrlAudio] = useState<string | null>(null);
   const [nombreArchivo, setNombreArchivo] = useState<string>("Operador: ");
@@ -20,10 +20,7 @@ const VoiceRecorder: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Dynamically import RecordRTC
       const RecordRTC = (await import('recordrtc')).default;
-
-      // Initialize audio context for waveform visualization
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
@@ -35,7 +32,6 @@ const VoiceRecorder: React.FC = () => {
 
       source.connect(analyser);
 
-      // Initialize RecordRTC
       const recorder = new RecordRTC(stream, {
         type: 'audio',
         mimeType: 'audio/wav',
@@ -62,14 +58,12 @@ const VoiceRecorder: React.FC = () => {
       const url = URL.createObjectURL(blob);
       setUrlAudio(url);
 
-      // Clean up
       recorderRef.current = null;
       setEstaGrabando(false);
       if (requestAnimationFrameRef.current) {
         cancelAnimationFrame(requestAnimationFrameRef.current);
       }
 
-      // Stop all tracks
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
@@ -96,7 +90,7 @@ const VoiceRecorder: React.FC = () => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgb(255, 0, 0)"; // Red line
+      ctx.strokeStyle = "rgb(255, 0, 0)";
 
       ctx.beginPath();
       const sliceWidth = (canvas.width * 1.0) / bufferLength;
@@ -127,7 +121,7 @@ const VoiceRecorder: React.FC = () => {
     formData.append('file', audioBlob, `${nombreArchivo}.wav`);
 
     try {
-      const response = await fetch('https://tok-n8n-sol.onrender.com/webhook-test/9e580d71-241c-4579-afbb-0cf5782465fc', {
+      const response = await fetch('https://tok-n8n-sol.onrender.com/webhook-test/41537048-7a36-4da6-a476-77754e4c07e2', {
         method: 'POST',
         body: formData,
       });
@@ -148,7 +142,6 @@ const VoiceRecorder: React.FC = () => {
       const audioBlob = await response.blob();
       await enviarAlWebhook(audioBlob);
 
-      // Initiate file download
       const link = document.createElement('a');
       link.href = urlAudio;
       link.download = `${encodeURIComponent(nombreArchivo || "grabacion")}.wav`;
@@ -165,11 +158,10 @@ const VoiceRecorder: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-screen w-full">
       <div className="p-4 max-w-md w-full bg-white bg-opacity-80 rounded-lg shadow-lg">
-
         <canvas ref={canvasRef} width={300} height={80} className="w-full mb-4" />
         <div className="mb-6 flex flex-col space-y-4 items-center">
           <Image
-            src="/logo.png" // Ensure the image is in the `public` folder
+            src="/logo.png"
             alt="Logo"
             width={96}
             height={96}
@@ -180,34 +172,12 @@ const VoiceRecorder: React.FC = () => {
           <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
 
           <ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">📄</span>
-              <span><strong>Órden: 🔊 ________</strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">🚚</span>
-              <span><strong>Entrega: 🔊 ________</strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">🛍️</span>
-              <span><strong>Envase y etiqueta: 🔊 ________</strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">👃</span>
-              <span><strong>Calidad: 🔊 ________ </strong> (al destapar el envase, color y olor extraño)</span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">🍽️</span>
-              <span><strong>Resultado: 🔊 ________ </strong>(de los alimentos procesado)</span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">💳</span>
-              <span><strong>Proceso de facturación: 🔊 ________</strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">💡</span>
-              <span><strong>¿Cómo podemos mejorar nuestros servicios? 🔊 ________</strong></span>
-            </li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0"> 👤</span><span><strong>Cliente: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🌡️</span><span><strong>Componentes polares: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🌞</span><span><strong>Temperatura: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">♻️</span><span><strong>Refill: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🛢️</span><span><strong>Filtrado de aceite: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🍟</span><span><strong>Cantidad de freídos: 🔊 ________</strong></span></li>
           </ul>
 
           <button
@@ -251,4 +221,4 @@ const VoiceRecorder: React.FC = () => {
   );
 };
 
-export default VoiceRecorder;
+export default VoiceTest;

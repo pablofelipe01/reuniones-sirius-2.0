@@ -1,24 +1,23 @@
+// pages/page.tsx or src/pages/page.tsx
 "use client";
-import VoiceRecorder from "../../components/VoiceRecorder";
-import N8nFormTrigger from "../../components/N8nFormTrigger";
+
+import NavBar from "../../components/NavBar";
+import Image from 'next/image';
 
 export default function Home() {
   return (
-    <div 
-    
-    className="flex items-center justify-center min-h-screen w-full"
-    style={{
-      backgroundImage: "url('/h6.jpeg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-    }}
+    <div
+      className="min-h-screen w-full flex flex-col"
+      style={{
+        backgroundImage: "url('/h6.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
+      <NavBar />
+
     
-      <div >
-        <VoiceRecorder />
-        {/* <N8nFormTrigger /> */}
-      </div>
     </div>
   );
 }
