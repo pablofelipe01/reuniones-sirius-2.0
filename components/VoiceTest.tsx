@@ -244,13 +244,7 @@ const VoiceTest: React.FC = () => {
       <div className="p-4 max-w-md w-full bg-white bg-opacity-80 rounded-lg shadow-lg">
         <canvas ref={canvasRef} width={300} height={80} className="w-full mb-4" />
         <div className="mb-6 flex flex-col space-y-4 items-center">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={96}
-            height={96}
-            className="mb-4 object-contain rounded-lg"
-          />
+          
 
           <i className="fas fa-microphone-alt text-6xl mb-2" style={{ color: "darkblue" }}></i>
           <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
@@ -260,7 +254,7 @@ const VoiceTest: React.FC = () => {
             <li className="flex items-start"><span className="w-6 flex-shrink-0">🌡️</span><span><strong>Componentes polares: 🔊 ________</strong></span></li>
             <li className="flex items-start"><span className="w-6 flex-shrink-0">🌞</span><span><strong>Temperatura: 🔊 ________</strong></span></li>
             <li className="flex items-start"><span className="w-6 flex-shrink-0">♻️</span><span><strong>Refill: 🔊 ________</strong></span></li>
-            <li className="flex items-start"><span className="w-6 flex-shrink-0">🛢️</span><span><strong>Filtrado de aceite: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🛢️</span><span><strong>Filtrado de aceite: 🔊 Si o No</strong></span></li>
             <li className="flex items-start"><span className="w-6 flex-shrink-0">🍟</span><span><strong>Cantidad de freídos: 🔊 ________</strong></span></li>
           </ul>
 

@@ -256,13 +256,7 @@ const VoiceRecorder: React.FC = () => {
       <div className="p-4 max-w-md w-full bg-white bg-opacity-80 rounded-lg shadow-lg">
         <canvas ref={canvasRef} width={300} height={80} className="w-full mb-4" />
         <div className="mb-6 flex flex-col space-y-4 items-center">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={96}
-            height={96}
-            className="mb-4 object-contain rounded-lg"
-          />
+          
 
           <i className="fas fa-microphone-alt text-6xl mb-2" style={{ color: "darkblue" }}></i>
           <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
