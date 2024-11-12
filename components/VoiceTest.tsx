@@ -121,7 +121,7 @@ const VoiceTest: React.FC = () => {
     formData.append('file', audioBlob, `${nombreArchivo}.wav`);
 
     try {
-      const response = await fetch('https://tok-n8n-sol.onrender.com/webhook-test/41537048-7a36-4da6-a476-77754e4c07e2', {
+      const response = await fetch('https://tok-n8n-sol.onrender.com/webhook/41537048-7a36-4da6-a476-77754e4c07e2', {
         method: 'POST',
         body: formData,
       });
