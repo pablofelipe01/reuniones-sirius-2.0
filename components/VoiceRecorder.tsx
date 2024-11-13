@@ -264,31 +264,31 @@ const VoiceRecorder: React.FC = () => {
           <ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
             <li className="flex items-start">
               <span className="w-6 flex-shrink-0">📄</span>
-              <span><strong>Órden: 🔊 ________</strong></span>
+              <span><strong>Órden: 🔊 </strong></span>
             </li>
             <li className="flex items-start">
               <span className="w-6 flex-shrink-0">🚚</span>
-              <span><strong>Entrega: 🔊 ________</strong></span>
+              <span><strong>Entrega: 🔊 </strong></span>
             </li>
             <li className="flex items-start">
               <span className="w-6 flex-shrink-0">🛍️</span>
-              <span><strong>Envase y etiqueta: 🔊 ________</strong></span>
+              <span><strong>Envase y etiqueta: 🔊 </strong></span>
             </li>
             <li className="flex items-start">
               <span className="w-6 flex-shrink-0">👃</span>
-              <span><strong>Calidad: 🔊 ________ </strong> (al destapar el envase, color y olor extraño)</span>
+              <span><strong>Calidad: 🔊 </strong> (al destapar el envase, color y olor extraño)</span>
             </li>
             <li className="flex items-start">
               <span className="w-6 flex-shrink-0">🍽️</span>
-              <span><strong>Resultado: 🔊 ________ </strong>(de los alimentos procesado)</span>
+              <span><strong>Resultado: 🔊 </strong>(de los alimentos procesado)</span>
             </li>
             <li className="flex items-start">
               <span className="w-6 flex-shrink-0">💳</span>
-              <span><strong>Proceso de facturación: 🔊 ________</strong></span>
+              <span><strong>Proceso de facturación: 🔊 </strong></span>
             </li>
             <li className="flex items-start">
               <span className="w-6 flex-shrink-0">💡</span>
-              <span><strong>¿Cómo podemos mejorar nuestros servicios? 🔊 ________</strong></span>
+              <span><strong>¿Cómo podemos mejorar nuestros servicios? 🔊 </strong></span>
             </li>
           </ul>
 

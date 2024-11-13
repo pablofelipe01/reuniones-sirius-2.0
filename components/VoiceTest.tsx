@@ -250,13 +250,13 @@ const VoiceTest: React.FC = () => {
           <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
 
           <ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
-            <li className="flex items-start"><span className="w-6 flex-shrink-0"> 👤</span><span><strong>Cliente: 🔊 ________</strong></span></li>
-            <li className="flex items-start"><span className="w-6 flex-shrink-0">🌡️</span><span><strong>Componentes polares: 🔊 ________</strong></span></li>
-            <li className="flex items-start"><span className="w-6 flex-shrink-0">🌞</span><span><strong>Temperatura: 🔊 ________</strong></span></li>
-            <li className="flex items-start"><span className="w-6 flex-shrink-0">♻️</span><span><strong>Refill: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0"> 👤</span><span><strong>Cliente: 🔊 </strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🌡️</span><span><strong>Componentes polares: 🔊 </strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🌞</span><span><strong>Temperatura: 🔊 </strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">♻️</span><span><strong>Refill: 🔊 </strong></span></li>
             <li className="flex items-start"><span className="w-6 flex-shrink-0">🛢️</span><span><strong>Filtrado de aceite: 🔊 Si o No</strong></span></li>
-            <li className="flex items-start"><span className="w-6 flex-shrink-0">🍟</span><span><strong>Cantidad de freídos: 🔊 ________</strong></span></li>
-            <li className="flex items-start"><span className="w-6 flex-shrink-0">🗣️</span><span><strong>Observaciones: 🔊 ________</strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🍟</span><span><strong>Cantidad de freídos: 🔊 </strong></span></li>
+            <li className="flex items-start"><span className="w-6 flex-shrink-0">🗣️</span><span><strong>Observaciones: 🔊 </strong></span></li>
           </ul>
 
           <button
