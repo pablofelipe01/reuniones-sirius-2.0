@@ -9,7 +9,7 @@ export default function Home() {
     <div
       className="min-h-screen w-full flex flex-col"
       style={{
-        backgroundImage: "url('/h6.jpg')",
+        backgroundImage: "url('/h6.jpeg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

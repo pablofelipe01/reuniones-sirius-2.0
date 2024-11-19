@@ -65,14 +65,21 @@ const NavBar: React.FC = () => {
               href="/clientes"
               className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
             >
-              Clientes
+              Voice Recorder
             </Link>
             <Link
-              href="/test"
+              href="/bot"
               className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
             >
-              Test
+              Bot
             </Link>
+            <Link
+              href="/informe"
+              className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Informe
+            </Link>
+          
           </div>
         </div>
       </div>
@@ -85,14 +92,21 @@ const NavBar: React.FC = () => {
               href="/clientes"
               className="block pl-3 pr-4 py-2 border-l-4 border-blue-500 text-base font-medium text-white bg-gray-800 focus:outline-none focus:bg-gray-700 focus:border-blue-500"
             >
-              Clientes
+               Voice Recorder
             </Link>
             <Link
-              href="/test"
-              className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:text-gray-300 hover:bg-gray-800 hover:border-gray-700"
+              href="/bot"
+              className="block pl-3 pr-4 py-2 border-l-4 border-blue-500 text-base font-medium text-white bg-gray-800 focus:outline-none focus:bg-gray-700 focus:border-blue-500"
             >
-              Test
+               Bot
             </Link>
+            <Link
+              href="/informe"
+              className="block pl-3 pr-4 py-2 border-l-4 border-blue-500 text-base font-medium text-white bg-gray-800 focus:outline-none focus:bg-gray-700 focus:border-blue-500"
+            >
+               Informe
+            </Link>
+        
           </div>
         </div>
       )}

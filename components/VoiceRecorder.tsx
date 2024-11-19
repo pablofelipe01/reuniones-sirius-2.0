@@ -1,335 +1,239 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Image from 'next/image';
-import Confetti from 'react-confetti';
 import { Loader2 } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage, auth } from "./firebaseConfig"; // Adjust the path as needed
+import { signInAnonymously } from "firebase/auth";
+import confetti from "canvas-confetti";
 
 const VoiceRecorder: React.FC = () => {
-  const [estaGrabando, setEstaGrabando] = useState<boolean>(false);
-  const [urlAudio, setUrlAudio] = useState<string | null>(null);
-  const [nombreArchivo, setNombreArchivo] = useState<string>("Operador: ");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showConfetti, setShowConfetti] = useState<boolean>(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const recorderRef = useRef<any>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const requestAnimationFrameRef = useRef<number | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [fileName] = useState<string>("recording");
+  const [isLoading, setIsLoading] = useState(false);
 
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const N8N_WEBHOOK_URL =
+    "https://tok-n8n-sol.onrender.com/webhook/dropbox-sirius";
+
+  // Initialize Firebase Auth
   useEffect(() => {
-    return () => {
-      cleanup();
-      if (urlAudio) {
-        URL.revokeObjectURL(urlAudio);
-      }
-    };
-  }, [urlAudio]);
+    signInAnonymously(auth)
+      .then(() => {
+        console.log("Signed in anonymously");
+      })
+      .catch((error) => {
+        console.error("Authentication error:", error);
+      });
+  }, []);
 
   const cleanup = () => {
-    // Clean up recording
-    if (recorderRef.current) {
-      try {
-        recorderRef.current.destroy();
-      } catch (e) {
-        console.error('Error destroying recorder:', e);
+    if (mediaRecorderRef.current) {
+      if (mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
       }
-      recorderRef.current = null;
+      mediaRecorderRef.current = null;
     }
-
-    // Clean up stream
     if (streamRef.current) {
-      try {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      } catch (e) {
-        console.error('Error stopping tracks:', e);
-      }
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-
-    // Clean up audio context
     if (audioContextRef.current) {
-      try {
-        audioContextRef.current.close();
-      } catch (e) {
-        console.error('Error closing audio context:', e);
-      }
+      audioContextRef.current.close();
       audioContextRef.current = null;
     }
-
-    // Clean up animation frame
-    if (requestAnimationFrameRef.current) {
-      cancelAnimationFrame(requestAnimationFrameRef.current);
-      requestAnimationFrameRef.current = null;
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
-
-    setEstaGrabando(false);
+    chunksRef.current = [];
+    setIsRecording(false);
     setIsLoading(false);
   };
 
-  const iniciarGrabacion = async () => {
-    try {
-      // Clean up any existing recording first
-      cleanup();
-
-      // Clean up previous URL if it exists
-      if (urlAudio) {
-        URL.revokeObjectURL(urlAudio);
-        setUrlAudio(null);
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const RecordRTC = (await import('recordrtc')).default;
-
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      const audioContext = new AudioContext();
-      audioContextRef.current = audioContext;
-
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      analyserRef.current = analyser;
-
-      source.connect(analyser);
-
-      const recorder = new RecordRTC(stream, {
-        type: 'audio',
-        mimeType: 'audio/webm;codecs=opus',
-        recorderType: RecordRTC.StereoAudioRecorder,
-        numberOfAudioChannels: 1,
-        desiredSampRate: 16000,
-        timeSlice: 1000,
-        ondataavailable: (blob: Blob) => {
-          console.log('Data available:', blob.size);
-        },
-      });
-
-      recorder.startRecording();
-      recorderRef.current = recorder;
-
-      setEstaGrabando(true);
-      setShowConfetti(false);
-      dibujarFormaDeOnda();
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      alert('No se pudo iniciar la grabación. Por favor, verifica los permisos del micrófono.');
-      cleanup();
-    }
-  };
-
-  const enviarAlWebhook = async (audioBlob: Blob): Promise<boolean> => {
-    const formData = new FormData();
-    formData.append('file', audioBlob, `${nombreArchivo}.webm`);
-
-    try {
-      const response = await fetch('https://tok-n8n-sol.onrender.com/webhook/9e580d71-241c-4579-afbb-0cf5782465fc', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        console.error('Error al enviar el archivo al webhook.');
-        return false;
-      }
-      console.log('Archivo enviado exitosamente al webhook.');
-      return true;
-    } catch (error) {
-      console.error('Error al enviar archivo al webhook:', error);
-      return false;
-    }
-  };
-
-  const detenerGrabacion = async () => {
-    if (recorderRef.current) {
-      try {
-        setIsLoading(true);
-        
-        // Stop recording using callback
-        recorderRef.current.stopRecording(() => {
-          try {
-            // Get the blob after the recording has stopped
-            const blob = recorderRef.current.getBlob();
-            
-            // Log blob details for debugging
-            console.log('Blob created:', {
-              size: blob.size,
-              type: blob.type,
-              isBlob: blob instanceof Blob
-            });
-            
-            // Verify that blob is valid
-            if (blob instanceof Blob && blob.size > 0) {
-              // Create URL from blob
-              const url = window.URL.createObjectURL(blob);
-              setUrlAudio(url);
-
-              // Send to webhook
-              enviarAlWebhook(blob).then((success) => {
-                if (success) {
-                  setShowConfetti(true);
-                  setTimeout(() => setShowConfetti(false), 5000);
-                } else {
-                  alert('Error al enviar el archivo. Por favor, intente nuevamente.');
-                }
-              });
-            } else {
-              throw new Error('Invalid recording blob');
-            }
-          } catch (blobError) {
-            console.error('Error processing blob:', blobError);
-            alert('Error al procesar la grabación. Por favor, intente nuevamente.');
-          } finally {
-            cleanup();
-          }
-        });
-      } catch (error) {
-        console.error('Error stopping recording:', error);
-        alert('Error al detener la grabación. Por favor, intente nuevamente.');
-        cleanup();
-      }
-    }
-  };
-
-  const dibujarFormaDeOnda = () => {
+  const drawWaveform = () => {
     const analyser = analyserRef.current;
     const canvas = canvasRef.current;
     if (!analyser || !canvas) return;
 
+    const ctx = canvas.getContext("2d");
     const bufferLength = analyser.fftSize;
     const dataArray = new Uint8Array(bufferLength);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
     const draw = () => {
-      requestAnimationFrameRef.current = requestAnimationFrame(draw);
-
+      animationFrameRef.current = requestAnimationFrame(draw);
       analyser.getByteTimeDomainData(dataArray);
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.138)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgb(255, 0, 0)"; // Red line
-
-      ctx.beginPath();
-      const sliceWidth = (canvas.width * 1.0) / bufferLength;
-      let x = 0;
+      ctx?.clearRect(0, 0, canvas.width, canvas.height);
+      ctx?.beginPath();
+      ctx?.moveTo(0, canvas.height / 2);
 
       for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = (v * canvas.height) / 2;
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-
-        x += sliceWidth;
+        const x = (i / bufferLength) * canvas.width;
+        const y = (dataArray[i] / 128.0) * (canvas.height / 2);
+        ctx?.lineTo(x, y);
       }
 
-      ctx.lineTo(canvas.width, canvas.height / 2);
-      ctx.stroke();
+      ctx?.lineTo(canvas.width, canvas.height / 2);
+
+      if (ctx) {
+        ctx.strokeStyle = "#007bff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
     };
 
     draw();
   };
 
-  const recargarPagina = () => {
-    window.location.reload();
+  const startRecording = async () => {
+    cleanup();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const audioContext =
+        new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioContext;
+
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      analyserRef.current = analyser;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm;codecs=opus",
+      });
+
+      chunksRef.current = []; // Clear previous chunks
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+
+        // Upload the file to Firebase Storage
+        await uploadFile(blob);
+      };
+
+      mediaRecorder.start(); // Start recording
+      mediaRecorderRef.current = mediaRecorder;
+
+      drawWaveform();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      alert("Could not start recording. Please ensure microphone access is allowed.");
+    }
+  };
+
+  const stopRecording = async () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const uploadFile = async (fileBlob: Blob) => {
+    setIsLoading(true);
+
+    try {
+      // Create a storage reference
+      const storageRef = ref(storage, `audio/${fileName}_${Date.now()}.webm`);
+
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, fileBlob);
+
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      console.log("File available at", downloadURL);
+
+      // Send the file URL to the n8n webhook
+      await sendFileUrlToWebhook(downloadURL);
+    } catch (error) {
+      console.error("File upload error:", error);
+      alert("File upload failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendFileUrlToWebhook = async (fileUrl: string) => {
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fileUrl }),
+      });
+
+      if (response.ok) {
+        confetti();
+        alert("File URL sent successfully!");
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        const errorText = await response.text();
+        console.error(
+          `Webhook request failed. Status: ${response.status}, Response: ${errorText}`
+        );
+        alert("Webhook request failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Webhook request error:", error);
+      alert("Webhook request failed. Please try again.");
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full relative">
-      {showConfetti && (
-        <Confetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          recycle={false}
-          numberOfPieces={200}
-        />
-      )}
-      
-      <div className="p-4 max-w-md w-full bg-white bg-opacity-80 rounded-lg shadow-lg">
-        <canvas ref={canvasRef} width={300} height={80} className="w-full mb-4" />
-        <div className="mb-6 flex flex-col space-y-4 items-center">
-          
-
-          <i className="fas fa-microphone-alt text-6xl mb-2" style={{ color: "darkblue" }}></i>
-          <h2 className="text-3xl mb-2" style={{ color: "darkblue" }}>Instrucciones</h2>
-
-          <ul className="text-xl mt-4 text-darkblue" style={{ color: "darkblue" }}>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">📄</span>
-              <span><strong>Órden: 🔊 </strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">🚚</span>
-              <span><strong>Entrega: 🔊 </strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">🛍️</span>
-              <span><strong>Envase y etiqueta: 🔊 </strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">👃</span>
-              <span><strong>Calidad: 🔊 </strong> (al destapar el envase, color y olor extraño)</span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">🍽️</span>
-              <span><strong>Resultado: 🔊 </strong>(de los alimentos procesado)</span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">💳</span>
-              <span><strong>Proceso de facturación: 🔊 </strong></span>
-            </li>
-            <li className="flex items-start">
-              <span className="w-6 flex-shrink-0">💡</span>
-              <span><strong>¿Cómo podemos mejorar nuestros servicios? 🔊 </strong></span>
-            </li>
-          </ul>
-
+    <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}>
+      <div className="bg-white shadow-lg rounded-lg p-6 max-w-md" style={{ backgroundColor: "rgba(0, 0, 0, 0.41" }}>
+        <h1 className="text-2xl font-bold text-center mb-4 text-white-800">Voice Recorder</h1>
+        <ul className="list-disc font-bold list-inside mb-4 text-left text-sm text-gray-200">
+          <li>🎙️ Diga el tema de la reunión.</li>
+          <li>👥 Mencione a los asistentes.</li>
+          <li>📍 Especifique la ubicación de la reunión.</li>
+        </ul>
+        <canvas
+          ref={canvasRef}
+          width={300}
+          height={100}
+          className="w-full mb-4"
+        ></canvas>
+        <div className="space-y-4">
           <button
-            onClick={iniciarGrabacion}
-            disabled={estaGrabando || isLoading}
-            className="px-4 py-2 bg-green-500 text-white rounded-full shadow-lg disabled:bg-gray-400 w-full sm:w-auto transform transition-transform duration-200 active:scale-95"
-          >
-            Iniciar
-          </button>
-          
-          <button
-            onClick={detenerGrabacion}
-            disabled={!estaGrabando || isLoading}
-            className="px-4 py-2 bg-red-500 text-white rounded-full shadow-lg disabled:bg-gray-400 w-full sm:w-auto transform transition-transform duration-200 active:scale-95 flex items-center justify-center gap-2"
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isLoading}
+            className={`w-20 h-20 text-white rounded-full transition-transform transform active:scale-90 focus:outline-none focus:ring-4 focus:ring-blue-300 ${
+              isRecording ? "bg-red-500" : "bg-green-500"
+            } shadow-lg`}
           >
             {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Enviando...
-              </>
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : isRecording ? (
+              "STOP"
             ) : (
-              'Stop'
+              "REC"
             )}
           </button>
-
-          {urlAudio && !isLoading && (
-            <button
-              onClick={recargarPagina}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-full shadow-lg w-full sm:w-auto mt-4 transform transition-transform duration-200 active:scale-95"
-            >
-              Nuevo Registro
-            </button>
-          )}
         </div>
-        
-        {urlAudio && (
-          <div className="mt-6">
-            <audio src={urlAudio} controls className="w-full" />
-          </div>
-        )}
       </div>
     </div>
   );

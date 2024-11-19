@@ -9,7 +9,7 @@ export default function ClientesPage() {
     <div
       className="min-h-screen w-full"
       style={{
-        backgroundImage: "url('/h6.jpg')",
+        backgroundImage: "url('/h6.jpeg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
