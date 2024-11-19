@@ -40,20 +40,6 @@ export default function BotPage() {
     return words.length > 50 ? `${truncated}...` : truncated;
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "Not Available";
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("es-ES", {
-        dateStyle: "long",
-        timeStyle: "short",
-      }).format(date);
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return "Invalid Date";
-    }
-  };
-
   return (
     <div
       className="min-h-screen w-full"
@@ -72,16 +58,16 @@ export default function BotPage() {
       <div className="pt-16 flex flex-col items-center justify-center px-4 md:px-8">
         <div
           className="w-full max-w-4xl bg-white bg-opacity-90 rounded-lg shadow-lg p-6"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.41)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.41" }}
         >
           <h1 className="text-center text-xl md:text-2xl font-bold text-gray-400 mb-6">
-            Chat Sobre una Reunión
+            Chat sobre una reunión
           </h1>
 
           {/* Dropdown Menu for Selecting Meeting */}
           <div className="mb-6">
             <label htmlFor="meeting-select" className="block text-gray-400 mb-2">
-              Seleccionar una reunión:
+              Selecciona una reunión:
             </label>
             <select
               id="meeting-select"
@@ -90,11 +76,11 @@ export default function BotPage() {
               onChange={(e) => handleSelectMeeting(e.target.value)}
             >
               <option value="" disabled>
-                -- Seleccionar una reunión --
+                -- Seleccionar reunión --
               </option>
               {meetings.map((meeting) => (
                 <option key={meeting.id} value={meeting.id}>
-                  {meeting.id} - {formatDate(meeting.createdTime)}
+                  {meeting.id} - {meeting.createdTime}
                 </option>
               ))}
             </select>
@@ -103,20 +89,18 @@ export default function BotPage() {
           {/* Meeting Details */}
           {selectedMeeting && (
             <div className="mb-6 p-4 bg-gray-100 rounded-lg">
-              <h2 className="text-gray-800 font-semibold mb-2">Detalles de la Reunión:</h2>
-              <p className="text-sm text-gray-600">
+              <h2 className="text-gray-800 font-semibold mb-2">Detalles de la reunión:</h2>
+              <p className="text-sm text-gray-800">
                 <strong>ID:</strong> {selectedMeeting.id}
               </p>
-              <p className="text-sm text-gray-600">
-                <strong>Fecha de Creación:</strong> {formatDate(selectedMeeting.createdTime)}
+              <p className="text-sm text-gray-800">
+                <strong>Hora de creación:</strong> {selectedMeeting.createdTime}
               </p>
-              <p className="text-sm text-gray-600">
-                <strong>Última Modificación:</strong>{" "}
-                {selectedMeeting.lastModified
-                  ? formatDate(selectedMeeting.lastModified)
-                  : "No Modificada"}
+              <p className="text-sm text-gray-800">
+                <strong>Última modificación:</strong>{" "}
+                {selectedMeeting.lastModified || "No modificada"}
               </p>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-800 mt-2">
                 <strong>Resumen:</strong> {truncateSummary(selectedMeeting.informe)}
               </p>
             </div>

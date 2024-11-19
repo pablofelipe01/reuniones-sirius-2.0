@@ -7,6 +7,7 @@ const Chatbot = ({ selectedMeetingId }: { selectedMeetingId: string }) => {
   const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isListening, setIsListening] = useState<boolean>(false);
+  const [voiceSupported, setVoiceSupported] = useState<boolean>(true);
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
@@ -44,7 +45,7 @@ const Chatbot = ({ selectedMeetingId }: { selectedMeetingId: string }) => {
 
   const handleVoiceInput = () => {
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
-      alert("Tu navegador no soporta entrada de voz.");
+      setVoiceSupported(false);
       return;
     }
 
@@ -105,9 +106,12 @@ const Chatbot = ({ selectedMeetingId }: { selectedMeetingId: string }) => {
         >
           {isLoading ? "..." : "Enviar"}
         </button>
-          
-        </div>
-        <br />
+      </div>
+
+      <br />
+
+      {/* Botón de voz */}
+      {voiceSupported ? (
         <button
           className={`p-2 rounded-full ${
             isListening ? "bg-red-500 text-white" : "bg-gray-300 text-black"
@@ -115,11 +119,14 @@ const Chatbot = ({ selectedMeetingId }: { selectedMeetingId: string }) => {
           onClick={handleVoiceInput}
           disabled={isListening}
           title="Hablar"
-          >
+        >
           🎤
         </button>
-          <div>
-      </div>
+      ) : (
+        <p className="text-sm text-red-500 mt-4">
+          Reconocimiento de voz no soportado en este navegador.
+        </p>
+      )}
     </div>
   );
 };
