@@ -6,6 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "./firebaseConfig"; // Adjust the path as needed
 import { signInAnonymously } from "firebase/auth";
 import confetti from "canvas-confetti";
+import Recorder from "recorder-js";
 
 const VoiceRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -13,18 +14,17 @@ const VoiceRecorder: React.FC = () => {
   const [fileName] = useState<string>("recording");
   const [isLoading, setIsLoading] = useState(false);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recorderRef = useRef<Recorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
 
   const N8N_WEBHOOK_URL =
     "https://tok-n8n-sol.onrender.com/webhook/dropbox-sirius";
 
-  // Initialize Firebase Auth
+  // Initialize Firebase Auth and Recorder
   useEffect(() => {
     signInAnonymously(auth)
       .then(() => {
@@ -33,15 +33,15 @@ const VoiceRecorder: React.FC = () => {
       .catch((error) => {
         console.error("Authentication error:", error);
       });
+
+    // Initialize AudioContext and Recorder
+    const audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
+    audioContextRef.current = audioContext;
+    recorderRef.current = new Recorder(audioContext);
   }, []);
 
   const cleanup = () => {
-    if (mediaRecorderRef.current) {
-      if (mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop();
-      }
-      mediaRecorderRef.current = null;
-    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -54,7 +54,6 @@ const VoiceRecorder: React.FC = () => {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-    chunksRef.current = [];
     setIsRecording(false);
     setIsLoading(false);
   };
@@ -100,10 +99,8 @@ const VoiceRecorder: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const audioContext =
-        new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = audioContext;
-
+      const audioContext = audioContextRef.current!;
+      const recorder = recorderRef.current!;
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 2048;
       analyserRef.current = analyser;
@@ -111,32 +108,11 @@ const VoiceRecorder: React.FC = () => {
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus",
-      });
-
-      chunksRef.current = []; // Clear previous chunks
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-
-        // Upload the file to Firebase Storage
-        await uploadFile(blob);
-      };
-
-      mediaRecorder.start(); // Start recording
-      mediaRecorderRef.current = mediaRecorder;
+      recorder.init(stream);
+      await recorder.start();
+      setIsRecording(true);
 
       drawWaveform();
-      setIsRecording(true);
     } catch (error) {
       console.error("Error starting recording:", error);
       alert("Could not start recording. Please ensure microphone access is allowed.");
@@ -144,9 +120,22 @@ const VoiceRecorder: React.FC = () => {
   };
 
   const stopRecording = async () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop();
+    try {
+      const recorder = recorderRef.current;
+      if (!recorder || !isRecording) return;
+
+      const { blob } = await recorder.stop();
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
+
+      // Upload the file to Firebase Storage
+      await uploadFile(blob);
+
       setIsRecording(false);
+    } catch (error) {
+      console.error("Error stopping recording:", error);
+    } finally {
+      cleanup();
     }
   };
 
@@ -154,18 +143,11 @@ const VoiceRecorder: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Create a storage reference
       const storageRef = ref(storage, `audio/${fileName}_${Date.now()}.webm`);
-
-      // Upload the file
       const snapshot = await uploadBytes(storageRef, fileBlob);
-
-      // Get the download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
 
       console.log("File available at", downloadURL);
-
-      // Send the file URL to the n8n webhook
       await sendFileUrlToWebhook(downloadURL);
     } catch (error) {
       console.error("File upload error:", error);
@@ -204,7 +186,7 @@ const VoiceRecorder: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}>
-      <div className="bg-white shadow-lg rounded-lg p-6 max-w-md" style={{ backgroundColor: "rgba(0, 0, 0, 0.41" }}>
+      <div className="bg-white shadow-lg rounded-lg p-6 max-w-md" style={{ backgroundColor: "rgba(0, 0, 0, 0.41)" }}>
         <h1 className="text-2xl font-bold text-center mb-4 text-white-800">Voice Recorder</h1>
         <ul className="list-disc font-bold list-inside mb-4 text-left text-sm text-gray-200">
           <li>🎙️ Diga el tema de la reunión.</li>
