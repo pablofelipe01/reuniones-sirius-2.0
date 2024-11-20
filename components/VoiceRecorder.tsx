@@ -2,25 +2,41 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import RecordRTC, { StereoAudioRecorder } from "recordrtc";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage, auth } from "./firebaseConfig";
 import { signInAnonymously } from "firebase/auth";
 import confetti from "canvas-confetti";
+
+// Importación dinámica de RecordRTC para evitar problemas de SSR
+import dynamic from 'next/dynamic';
 
 const VoiceRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [fileName] = useState<string>("recording");
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
-  const recorderRef = useRef<RecordRTC | null>(null);
+  const recorderRef = useRef<any | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const N8N_WEBHOOK_URL =
     "https://tok-n8n-sol.onrender.com/webhook/dropbox-sirius";
 
   useEffect(() => {
+    setIsClient(true);
+    
+    // Importar RecordRTC dinámicamente solo en el cliente
+    const loadRecordRTC = async () => {
+      const RecordRTC = (await import('recordrtc')).default;
+      window.RecordRTC = RecordRTC;
+    };
+
+    if (typeof window !== 'undefined') {
+      loadRecordRTC();
+    }
+
+    // Autenticación anónima
     signInAnonymously(auth)
       .then(() => {
         console.log("Signed in anonymously");
@@ -44,14 +60,17 @@ const VoiceRecorder: React.FC = () => {
   };
 
   const startRecording = async () => {
+    if (!isClient) return;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
+      const RecordRTC = (await import('recordrtc')).default;
       const recorder = new RecordRTC(stream, {
         type: "audio",
         mimeType: "audio/webm",
-        recorderType: StereoAudioRecorder,
+        recorderType: RecordRTC.StereoAudioRecorder,
       });
 
       recorder.startRecording();
@@ -127,6 +146,11 @@ const VoiceRecorder: React.FC = () => {
       alert("Webhook request failed. Please try again.");
     }
   };
+
+  // Si no estamos en el cliente, mostramos un estado de carga o nada
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}>
