@@ -21,11 +21,29 @@ export default function BotPage() {
         ...details,
       }));
 
-      setMeetings(formattedMeetings);
+      // Ordenar reuniones por fecha de creación (más reciente primero)
+      const sortedMeetings = formattedMeetings.sort((a, b) => 
+        new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+      );
+
+      setMeetings(sortedMeetings);
     };
 
     fetchMeetings();
   }, []);
+
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return "No disponible";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
 
   const handleSelectMeeting = (id: string) => {
     setSelectedMeetingId(id);
@@ -80,7 +98,7 @@ export default function BotPage() {
               </option>
               {meetings.map((meeting) => (
                 <option key={meeting.id} value={meeting.id}>
-                  {meeting.id} - {meeting.createdTime}
+                  {formatDateTime(meeting.createdTime)} - {meeting.id}
                 </option>
               ))}
             </select>
@@ -94,11 +112,11 @@ export default function BotPage() {
                 <strong>ID:</strong> {selectedMeeting.id}
               </p>
               <p className="text-sm text-gray-800">
-                <strong>Hora de creación:</strong> {selectedMeeting.createdTime}
+                <strong>Hora de creación:</strong> {formatDateTime(selectedMeeting.createdTime)}
               </p>
               <p className="text-sm text-gray-800">
                 <strong>Última modificación:</strong>{" "}
-                {selectedMeeting.lastModified || "No modificada"}
+                {formatDateTime(selectedMeeting.lastModified) || "No modificada"}
               </p>
               <p className="text-sm text-gray-800 mt-2">
                 <strong>Resumen:</strong> {truncateSummary(selectedMeeting.informe)}

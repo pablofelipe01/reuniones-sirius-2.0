@@ -2,11 +2,11 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import RecordRTC, { StereoAudioRecorder } from "recordrtc";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage, auth } from "./firebaseConfig"; // Adjust the path as needed
+import { storage, auth } from "./firebaseConfig";
 import { signInAnonymously } from "firebase/auth";
 import confetti from "canvas-confetti";
-import Recorder from "recorder-js";
 
 const VoiceRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -14,17 +14,12 @@ const VoiceRecorder: React.FC = () => {
   const [fileName] = useState<string>("recording");
   const [isLoading, setIsLoading] = useState(false);
 
-  const recorderRef = useRef<Recorder | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const recorderRef = useRef<RecordRTC | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
 
   const N8N_WEBHOOK_URL =
     "https://tok-n8n-sol.onrender.com/webhook/dropbox-sirius";
 
-  // Initialize Firebase Auth and Recorder
   useEffect(() => {
     signInAnonymously(auth)
       .then(() => {
@@ -33,86 +28,35 @@ const VoiceRecorder: React.FC = () => {
       .catch((error) => {
         console.error("Authentication error:", error);
       });
-
-    // Initialize AudioContext and Recorder
-    const audioContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
-    audioContextRef.current = audioContext;
-    recorderRef.current = new Recorder(audioContext);
   }, []);
 
   const cleanup = () => {
+    if (recorderRef.current) {
+      recorderRef.current.destroy();
+      recorderRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
     }
     setIsRecording(false);
     setIsLoading(false);
   };
 
-  const drawWaveform = () => {
-    const analyser = analyserRef.current;
-    const canvas = canvasRef.current;
-    if (!analyser || !canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    const bufferLength = analyser.fftSize;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      animationFrameRef.current = requestAnimationFrame(draw);
-      analyser.getByteTimeDomainData(dataArray);
-
-      ctx?.clearRect(0, 0, canvas.width, canvas.height);
-      ctx?.beginPath();
-      ctx?.moveTo(0, canvas.height / 2);
-
-      for (let i = 0; i < bufferLength; i++) {
-        const x = (i / bufferLength) * canvas.width;
-        const y = (dataArray[i] / 128.0) * (canvas.height / 2);
-        ctx?.lineTo(x, y);
-      }
-
-      ctx?.lineTo(canvas.width, canvas.height / 2);
-
-      if (ctx) {
-        ctx.strokeStyle = "#007bff";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    };
-
-    draw();
-  };
-
   const startRecording = async () => {
-    cleanup();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const audioContext = audioContextRef.current!;
-      const recorder = recorderRef.current!;
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      analyserRef.current = analyser;
+      const recorder = new RecordRTC(stream, {
+        type: "audio",
+        mimeType: "audio/webm",
+        recorderType: StereoAudioRecorder,
+      });
 
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyser);
-
-      recorder.init(stream);
-      await recorder.start();
+      recorder.startRecording();
+      recorderRef.current = recorder;
       setIsRecording(true);
-
-      drawWaveform();
     } catch (error) {
       console.error("Error starting recording:", error);
       alert("Could not start recording. Please ensure microphone access is allowed.");
@@ -120,22 +64,22 @@ const VoiceRecorder: React.FC = () => {
   };
 
   const stopRecording = async () => {
+    if (!recorderRef.current || !isRecording) return;
+
     try {
-      const recorder = recorderRef.current;
-      if (!recorder || !isRecording) return;
+      recorderRef.current.stopRecording(async () => {
+        const blob = recorderRef.current?.getBlob();
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          setAudioUrl(url);
 
-      const { blob } = await recorder.stop();
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-
-      // Upload the file to Firebase Storage
-      await uploadFile(blob);
-
-      setIsRecording(false);
+          // Upload the file to Firebase Storage
+          await uploadFile(blob);
+        }
+        cleanup();
+      });
     } catch (error) {
       console.error("Error stopping recording:", error);
-    } finally {
-      cleanup();
     }
   };
 
@@ -193,12 +137,6 @@ const VoiceRecorder: React.FC = () => {
           <li>👥 Mencione a los asistentes.</li>
           <li>📍 Especifique la ubicación de la reunión.</li>
         </ul>
-        <canvas
-          ref={canvasRef}
-          width={300}
-          height={100}
-          className="w-full mb-4"
-        ></canvas>
         <div className="space-y-4">
           <button
             onClick={isRecording ? stopRecording : startRecording}
@@ -216,6 +154,11 @@ const VoiceRecorder: React.FC = () => {
             )}
           </button>
         </div>
+        {audioUrl && (
+          <audio controls src={audioUrl} className="mt-4 w-full">
+            Your browser does not support the audio element.
+          </audio>
+        )}
       </div>
     </div>
   );
