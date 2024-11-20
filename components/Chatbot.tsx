@@ -82,7 +82,11 @@ const Chatbot = ({ selectedMeetingId }: { selectedMeetingId: string }) => {
           <div
             key={index}
             className={`text-sm mb-2 ${
-              msg.startsWith("Tú:") ? "text-blue-700 font-semibold" : "text-gray-800"
+              msg.startsWith("Tú:")
+                ? "text-blue-700 font-semibold"
+                : msg.startsWith("Sirius Bot:")
+                ? "text-green-700 font-semibold"
+                : "text-gray-800"
             }`}
           >
             {msg}
@@ -99,6 +103,13 @@ const Chatbot = ({ selectedMeetingId }: { selectedMeetingId: string }) => {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Escribe tu mensaje..."
         />
+      </div>
+
+      <br />
+
+      {/* Contenedor de Botones con Espaciado */}
+      <div className="flex items-center space-x-2 mt-2">
+        {/* Botón de Enviar */}
         <button
           className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed"
           onClick={() => handleSendMessage(input)}
@@ -106,27 +117,25 @@ const Chatbot = ({ selectedMeetingId }: { selectedMeetingId: string }) => {
         >
           {isLoading ? "..." : "Enviar"}
         </button>
+
+        {/* Botón de Voz */}
+        {voiceSupported ? (
+          <button
+            className={`p-2 rounded-full ${
+              isListening ? "bg-red-500 text-white" : "bg-gray-300 text-black"
+            } transition-transform transform hover:scale-110 focus:outline-none`}
+            onClick={handleVoiceInput}
+            disabled={isListening}
+            title="Hablar"
+          >
+            {isListening ? "🛑" : "🎤"}
+          </button>
+        ) : (
+          <p className="text-sm text-red-500 mt-4">
+            Reconocimiento de voz no soportado en este navegador.
+          </p>
+        )}
       </div>
-
-      <br />
-
-      {/* Botón de voz */}
-      {voiceSupported ? (
-        <button
-          className={`p-2 rounded-full ${
-            isListening ? "bg-red-500 text-white" : "bg-gray-300 text-black"
-          } transition-transform transform hover:scale-110 focus:outline-none`}
-          onClick={handleVoiceInput}
-          disabled={isListening}
-          title="Hablar"
-        >
-          🎤
-        </button>
-      ) : (
-        <p className="text-sm text-red-500 mt-4">
-          Reconocimiento de voz no soportado en este navegador.
-        </p>
-      )}
     </div>
   );
 };
