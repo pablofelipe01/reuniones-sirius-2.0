@@ -7,114 +7,96 @@ import { storage, auth } from "./firebaseConfig";
 import { signInAnonymously } from "firebase/auth";
 import confetti from "canvas-confetti";
 
-// Importación dinámica de RecordRTC para evitar problemas de SSR
-import dynamic from 'next/dynamic';
-
 const VoiceRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [fileName] = useState<string>("recording");
   const [isLoading, setIsLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  const recorderRef = useRef<any | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const N8N_WEBHOOK_URL =
-    "https://tok-n8n-sol.onrender.com/webhook/dropbox-sirius";
+  const N8N_WEBHOOK_URL = "https://tok-n8n-sol.onrender.com/webhook/dropbox-sirius";
 
   useEffect(() => {
-    setIsClient(true);
-    
-    // Importar RecordRTC dinámicamente solo en el cliente
-    const loadRecordRTC = async () => {
-      const RecordRTC = (await import('recordrtc')).default;
-      window.RecordRTC = RecordRTC;
-    };
+    signInAnonymously(auth).catch((error) => {
+      console.error("Authentication error:", error);
+    });
 
-    if (typeof window !== 'undefined') {
-      loadRecordRTC();
-    }
-
-    // Autenticación anónima
-    signInAnonymously(auth)
-      .then(() => {
-        console.log("Signed in anonymously");
-      })
-      .catch((error) => {
-        console.error("Authentication error:", error);
-      });
+    return () => cleanup();
   }, []);
 
   const cleanup = () => {
-    if (recorderRef.current) {
-      recorderRef.current.destroy();
-      recorderRef.current = null;
-    }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    setMediaRecorder(null);
+    setAudioChunks([]);
     setIsRecording(false);
     setIsLoading(false);
   };
 
   const startRecording = async () => {
-    if (!isClient) return;
-
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints: MediaStreamConstraints = {
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
-      const RecordRTC = (await import('recordrtc')).default;
-      const recorder = new RecordRTC(stream, {
-        type: "audio",
-        mimeType: "audio/webm",
-        recorderType: RecordRTC.StereoAudioRecorder,
+      const recorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm') 
+          ? 'audio/webm' 
+          : 'audio/mp4'
       });
 
-      recorder.startRecording();
-      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          setAudioChunks(chunks => [...chunks, event.data]);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { 
+          type: recorder.mimeType 
+        });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+        await uploadFile(audioBlob);
+      };
+
+      setMediaRecorder(recorder);
+      recorder.start(100);
       setIsRecording(true);
     } catch (error) {
       console.error("Error starting recording:", error);
-      alert("Could not start recording. Please ensure microphone access is allowed.");
+      alert("Please grant microphone permission to record audio.");
     }
   };
 
-  const stopRecording = async () => {
-    if (!recorderRef.current || !isRecording) return;
-
-    try {
-      recorderRef.current.stopRecording(async () => {
-        const blob = recorderRef.current?.getBlob();
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          setAudioUrl(url);
-
-          // Upload the file to Firebase Storage
-          await uploadFile(blob);
-        }
-        cleanup();
-      });
-    } catch (error) {
-      console.error("Error stopping recording:", error);
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      cleanup();
     }
   };
 
   const uploadFile = async (fileBlob: Blob) => {
     setIsLoading(true);
-
     try {
-      const storageRef = ref(storage, `audio/${fileName}_${Date.now()}.webm`);
+      const storageRef = ref(storage, `audio/${fileName}_${Date.now()}.${fileBlob.type.split('/')[1]}`);
       const snapshot = await uploadBytes(storageRef, fileBlob);
       const downloadURL = await getDownloadURL(snapshot.ref);
-
-      console.log("File available at", downloadURL);
       await sendFileUrlToWebhook(downloadURL);
     } catch (error) {
-      console.error("File upload error:", error);
-      alert("File upload failed. Please try again.");
+      console.error("Upload error:", error);
+      alert("Upload failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -124,33 +106,22 @@ const VoiceRecorder: React.FC = () => {
     try {
       const response = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ fileUrl }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl })
       });
 
       if (response.ok) {
         confetti();
-        alert("File URL sent successfully!");
+        alert("Recording uploaded successfully!");
         setTimeout(() => window.location.reload(), 1500);
       } else {
-        const errorText = await response.text();
-        console.error(
-          `Webhook request failed. Status: ${response.status}, Response: ${errorText}`
-        );
-        alert("Webhook request failed. Please try again.");
+        throw new Error(`Webhook failed: ${response.status}`);
       }
     } catch (error) {
-      console.error("Webhook request error:", error);
-      alert("Webhook request failed. Please try again.");
+      console.error("Webhook error:", error);
+      alert("Upload failed. Please try again.");
     }
   };
-
-  // Si no estamos en el cliente, mostramos un estado de carga o nada
-  if (!isClient) {
-    return null;
-  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}>
