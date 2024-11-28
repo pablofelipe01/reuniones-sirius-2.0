@@ -3,11 +3,13 @@
 import NavBar from "../../../components/NavBar";
 import { useEffect, useState } from "react";
 import Chatbot from "../../../components/Chatbot";
+import Image from 'next/image';
 
 export default function BotPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [selectedMeetingId, setSelectedMeetingId] = useState<string>("");
   const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [chatMode, setChatMode] = useState<"single" | "global">("single");
 
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -21,7 +23,7 @@ export default function BotPage() {
         ...details,
       }));
 
-      // Ordenar reuniones por fecha de creación (más reciente primero)
+      // Sort meetings by creation date (most recent first)
       const sortedMeetings = formattedMeetings.sort((a, b) => 
         new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
       );
@@ -52,7 +54,7 @@ export default function BotPage() {
   };
 
   const truncateSummary = (text: string, lines: number = 3) => {
-    if (!text) return "No summary available.";
+    if (!text) return "No hay resumen disponible.";
     const words = text.split(" ");
     const truncated = words.slice(0, 50).join(" "); // Adjust for about 3 lines
     return words.length > 50 ? `${truncated}...` : truncated;
@@ -66,6 +68,7 @@ export default function BotPage() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed"
       }}
     >
       <NavBar />
@@ -79,58 +82,103 @@ export default function BotPage() {
           style={{ backgroundColor: "rgba(0, 0, 0, 0.41" }}
         >
           <h1 className="text-center text-xl md:text-2xl font-bold text-gray-400 mb-6">
-            Chat sobre una reunión
+            Chat sobre reuniones
           </h1>
-
-          {/* Dropdown Menu for Selecting Meeting */}
-          <div className="mb-6">
-            <label htmlFor="meeting-select" className="block text-gray-400 mb-2">
-              Selecciona una reunión:
-            </label>
-            <select
-              id="meeting-select"
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={selectedMeetingId}
-              onChange={(e) => handleSelectMeeting(e.target.value)}
-            >
-              <option value="" disabled>
-                -- Seleccionar reunión --
-              </option>
-              {meetings.map((meeting) => (
-                <option key={meeting.id} value={meeting.id}>
-                  {formatDateTime(meeting.createdTime)} - {meeting.id}
-                </option>
-              ))}
-            </select>
+            <br />
+          {/* Chat Mode Toggle */}
+          <div className="mb-6 flex justify-center">
+            <div className="inline-flex rounded-lg border border-gray-300 p-1">
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  chatMode === "single" 
+                    ? "bg-blue-500 text-white" 
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                onClick={() => {
+                  setChatMode("single");
+                  setSelectedMeeting(null);
+                  setSelectedMeetingId("");
+                }}
+              >
+                Chat Individual
+              </button>
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  chatMode === "global" 
+                    ? "bg-blue-500 text-white" 
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                onClick={() => setChatMode("global")}
+              >
+                Búsqueda Global
+              </button>
+            </div>
           </div>
-          <br />
-          {/* Meeting Details */}
-          {selectedMeeting && (
-            <div className="mb-6 p-4 bg-gray-100 rounded-lg">
-              <h2 className="text-gray-800 font-semibold mb-2">Detalles de la reunión:</h2>
-              <p className="text-sm text-gray-800">
-                <strong>ID:</strong> {selectedMeeting.id}
-              </p>
-              <p className="text-sm text-gray-800">
-                <strong>Hora de creación:</strong> {formatDateTime(selectedMeeting.createdTime)}
-              </p>
-              <p className="text-sm text-gray-800">
-                <strong>Última modificación:</strong>{" "}
-                {formatDateTime(selectedMeeting.lastModified) || "No modificada"}
-              </p>
-              <p className="text-sm text-gray-800 mt-2">
-                <strong>Resumen:</strong> {truncateSummary(selectedMeeting.informe)}
-              </p>
-            </div>
-          )}
-          <br />
 
-          {/* Chatbot Component */}
-          {selectedMeetingId && (
-            <div className="mt-6">
-              <Chatbot selectedMeetingId={selectedMeetingId} />
-            </div>
+          {/* Show meeting selector only in single chat mode */}
+          {chatMode === "single" && (
+            <>
+              <div className="mb-6">
+                <label htmlFor="meeting-select" className="block text-gray-400 mb-2">
+                  Selecciona una reunión:
+                </label>
+                <select
+                  id="meeting-select"
+                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedMeetingId}
+                  onChange={(e) => handleSelectMeeting(e.target.value)}
+                >
+                  <option value="" disabled>
+                    -- Seleccionar reunión --
+                  </option>
+                  {meetings.map((meeting) => (
+                    <option key={meeting.id} value={meeting.id}>
+                      {formatDateTime(meeting.createdTime)} - {meeting.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <br />
+
+              {/* Meeting Details */}
+              {selectedMeeting && (
+                <div className="mb-6 p-4 bg-gray-100 rounded-lg">
+                  <h2 className="text-gray-800 font-semibold mb-2">
+                    Detalles de la reunión:
+                  </h2>
+                  <p className="text-sm text-gray-800">
+                    <strong>ID:</strong> {selectedMeeting.id}
+                  </p>
+                  <p className="text-sm text-gray-800">
+                    <strong>Hora de creación:</strong> {formatDateTime(selectedMeeting.createdTime)}
+                  </p>
+                  <p className="text-sm text-gray-800">
+                    <strong>Última modificación:</strong>{" "}
+                    {formatDateTime(selectedMeeting.lastModified) || "No modificada"}
+                  </p>
+                  <p className="text-sm text-gray-800 mt-2">
+                    <strong>Resumen:</strong> {truncateSummary(selectedMeeting.informe)}
+                  </p>
+                </div>
+              )}
+            </>
           )}
+            <br />
+          {/* Enhanced Chatbot Component */}
+          <div className="mt-6">
+            {(chatMode === "global" || (chatMode === "single" && selectedMeetingId)) && (
+              <Chatbot
+                selectedMeetingId={selectedMeetingId}
+                mode={chatMode}
+              />
+            )}
+            
+            {chatMode === "single" && !selectedMeetingId && (
+              <p className="text-center text-gray-400">
+                Selecciona una reunión para comenzar el chat
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

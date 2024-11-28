@@ -1,3 +1,5 @@
+// /app/api/get-meetings/route.ts
+
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -11,13 +13,20 @@ export async function GET() {
 
     const data = await response.json();
 
-    // Transform data into an array of meetings
+    if (!data) {
+      return NextResponse.json({ meetings: [] }, { status: 200 });
+    }
+
+    // Transformar los datos en un array de reuniones
     const meetings = Object.entries(data).map(([key, value]: [string, any]) => ({
-      id: value.id || key,
+      id: key, // Usar siempre el key de Firebase como id para consistencia
+      title: value.title || "",
       createdTime: value.createdTime || null,
       lastModified: value.lastModified || null,
       informe: value.informe || "",
     }));
+
+    console.log(`Total meetings fetched: ${meetings.length}`);
 
     return NextResponse.json({ meetings });
   } catch (error) {

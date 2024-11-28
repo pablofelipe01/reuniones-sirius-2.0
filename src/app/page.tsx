@@ -8,13 +8,16 @@ export default function Home() {
   return (
     <div
       className="min-h-screen w-full flex flex-col"
-      style={{
-        backgroundImage: "url('/h6.jpeg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      
     >
+      <Image
+        src="/h6.jpeg"
+        alt="Background Image"
+        layout="fill"
+        objectFit="cover"
+        className="absolute inset-0"
+      />
+
       <NavBar />
 
     

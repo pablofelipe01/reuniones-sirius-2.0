@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Loader2, Clock } from "lucide-react";
 import { storage, auth } from "./firebaseConfig";
 import { signInAnonymously } from "firebase/auth";
 import confetti from "canvas-confetti";
@@ -152,40 +152,59 @@ const VoiceRecorder: React.FC = () => {
     return null;
   }
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen" style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}>
-      <div className="bg-white shadow-lg rounded-lg p-6 max-w-md" style={{ backgroundColor: "rgba(0, 0, 0, 0.41)" }}>
-        <h1 className="text-2xl font-bold text-center mb-4 text-white-800">Voice Recorder</h1>
-        <ul className="list-disc font-bold list-inside mb-4 text-left text-sm text-gray-200">
-          <li>🎙️ Diga el tema de la reunión.</li>
-          <li>👥 Mencione a los asistentes.</li>
-          <li>📍 Especifique la ubicación de la reunión.</li>
+ // Mantén toda la lógica anterior igual, solo actualiza la parte del return
+
+return (
+  <div className="w-full">
+    <div className="space-y-6">
+      {/* Instrucciones */}
+      <div className="bg-black bg-opacity-40 rounded-lg p-4">
+        <ul className="list-disc list-inside text-sm text-gray-200 space-y-2">
+          <li>🎙️ Diga el tema de la reunión</li>
+          <li>👥 Mencione a los asistentes</li>
+          <li>📍 Especifique la ubicación</li>
         </ul>
-        <div className="space-y-4">
-          <button
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={isLoading}
-            className={`w-20 h-20 text-white rounded-full transition-transform transform active:scale-90 focus:outline-none focus:ring-4 focus:ring-blue-300 ${
-              isRecording ? "bg-red-500" : "bg-green-500"
-            } shadow-lg`}
-          >
-            {isLoading ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
-            ) : isRecording ? (
-              "STOP"
-            ) : (
-              "REC"
-            )}
-          </button>
-        </div>
-        {audioUrl && (
-          <audio controls src={audioUrl} className="mt-4 w-full">
-            Your browser does not support the audio element.
-          </audio>
+      </div>
+
+      {/* Botón de grabación */}
+      <div className="flex flex-col items-center space-y-4">
+        <button
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={isLoading}
+          className={`w-16 h-16 flex items-center justify-center text-white rounded-full transition-all transform hover:scale-105 active:scale-95 ${
+            isRecording 
+              ? "bg-red-500 hover:bg-red-600" 
+              : "bg-green-500 hover:bg-green-600"
+          } shadow-lg`}
+        >
+          {isLoading ? (
+            <Loader2 className="w-6 h-6 animate-spin" />
+          ) : isRecording ? (
+            <span className="text-sm font-bold">STOP</span>
+          ) : (
+            <span className="text-sm font-bold">REC</span>
+          )}
+        </button>
+
+        {isRecording && (
+          <div className="flex items-center text-red-400">
+            <Clock className="w-4 h-4 mr-1 animate-pulse" />
+            <span className="text-sm">Grabando...</span>
+          </div>
         )}
       </div>
+
+      {/* Player de audio */}
+      {audioUrl && (
+        <div className="mt-4">
+          <audio controls src={audioUrl} className="w-full">
+            Tu navegador no soporta el elemento de audio.
+          </audio>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default VoiceRecorder;
