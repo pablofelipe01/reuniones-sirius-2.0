@@ -11,6 +11,7 @@ export default function BotPage() {
   const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
   const [chatMode, setChatMode] = useState<"single" | "global">("single");
 
+  // Efecto para cargar las reuniones desde Firebase
   useEffect(() => {
     const fetchMeetings = async () => {
       const response = await fetch(
@@ -23,7 +24,6 @@ export default function BotPage() {
         ...details,
       }));
 
-      // Sort meetings by creation date (most recent first)
       const sortedMeetings = formattedMeetings.sort((a, b) => 
         new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
       );
@@ -56,36 +56,40 @@ export default function BotPage() {
   const truncateSummary = (text: string, lines: number = 3) => {
     if (!text) return "No hay resumen disponible.";
     const words = text.split(" ");
-    const truncated = words.slice(0, 50).join(" "); // Adjust for about 3 lines
+    const truncated = words.slice(0, 50).join(" ");
     return words.length > 50 ? `${truncated}...` : truncated;
   };
 
   return (
+    // El contenedor principal con el fondo
     <div
-      className="min-h-screen w-full"
       style={{
+        minHeight: '100vh',
+        width: '100%',
         backgroundImage: "url('/h6.jpeg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed"
+        backgroundAttachment: "fixed",
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
       <NavBar />
-      <br />
-      <br />
-      <br />
-
-      <div className="pt-16 flex flex-col items-center justify-center px-4 md:px-8">
+<br />
+<br />
+<br />
+      {/* Contenedor del contenido principal */}
+      <div className="flex-1 pt-16 px-4 md:px-8 mt-8">
         <div
-          className="w-full max-w-4xl bg-white bg-opacity-90 rounded-lg shadow-lg p-6"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.41" }}
+          className="w-full max-w-4xl mx-auto rounded-lg shadow-lg p-6"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.41)" }}
         >
-          <h1 className="text-center text-xl md:text-2xl font-bold text-gray-400 mb-6">
-            Chat sobre reuniones
+          <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
+            Chat
           </h1>
-            <br />
-          {/* Chat Mode Toggle */}
+
+          {/* Selector de modo de chat */}
           <div className="mb-6 flex justify-center">
             <div className="inline-flex rounded-lg border border-gray-300 p-1">
               <button
@@ -115,32 +119,35 @@ export default function BotPage() {
             </div>
           </div>
 
-          {/* Show meeting selector only in single chat mode */}
+          {/* Selector de reunión y detalles */}
           {chatMode === "single" && (
             <>
               <div className="mb-6">
-                <label htmlFor="meeting-select" className="block text-gray-400 mb-2">
+                <label htmlFor="meeting-select" className="block text-gray-900 mb-2">
                   Selecciona una reunión:
                 </label>
                 <select
-                  id="meeting-select"
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedMeetingId}
-                  onChange={(e) => handleSelectMeeting(e.target.value)}
-                >
-                  <option value="" disabled>
-                    -- Seleccionar reunión --
-                  </option>
-                  {meetings.map((meeting) => (
-                    <option key={meeting.id} value={meeting.id}>
-                      {formatDateTime(meeting.createdTime)} - {meeting.id}
-                    </option>
-                  ))}
-                </select>
+  id="meeting-select"
+  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-white"
+  value={selectedMeetingId}
+  onChange={(e) => handleSelectMeeting(e.target.value)}
+  style={{
+    // Aseguramos que las opciones tengan un buen contraste
+    colorScheme: 'light'
+  }}
+>
+  <option value="" disabled className="text-gray-600">
+    -- Seleccionar reunión --
+  </option>
+  {meetings.map((meeting) => (
+    <option key={meeting.id} value={meeting.id} className="text-gray-800">
+      {formatDateTime(meeting.createdTime)} - {meeting.id}
+    </option>
+  ))}
+</select>
               </div>
-              <br />
-
-              {/* Meeting Details */}
+<br />
+              {/* Detalles de la reunión */}
               {selectedMeeting && (
                 <div className="mb-6 p-4 bg-gray-100 rounded-lg">
                   <h2 className="text-gray-800 font-semibold mb-2">
@@ -163,8 +170,8 @@ export default function BotPage() {
               )}
             </>
           )}
-            <br />
-          {/* Enhanced Chatbot Component */}
+<br />
+          {/* Componente de chat */}
           <div className="mt-6">
             {(chatMode === "global" || (chatMode === "single" && selectedMeetingId)) && (
               <Chatbot
@@ -174,7 +181,7 @@ export default function BotPage() {
             )}
             
             {chatMode === "single" && !selectedMeetingId && (
-              <p className="text-center text-gray-400">
+              <p className="text-center text-gray-100">
                 Selecciona una reunión para comenzar el chat
               </p>
             )}

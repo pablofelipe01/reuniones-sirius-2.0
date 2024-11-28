@@ -14,6 +14,7 @@ const Chatbot = ({ selectedMeetingId, mode = "single" }: ChatbotProps) => {
   const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isListening, setIsListening] = useState<boolean>(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState<boolean>(false); // Nuevo estado
   const [voiceSupported, setVoiceSupported] = useState<boolean>(true);
   const [includeWebSearch, setIncludeWebSearch] = useState<boolean>(false);
   
@@ -134,10 +135,15 @@ const Chatbot = ({ selectedMeetingId, mode = "single" }: ChatbotProps) => {
 
     recognition.onstart = () => {
       setIsListening(true);
+      setIsProcessingVoice(false);
     };
 
     recognition.onend = () => {
       setIsListening(false);
+      setIsProcessingVoice(true); // Mostrar loading
+      setTimeout(() => {
+        setIsProcessingVoice(false); // Ocultar loading después del procesamiento simulado
+      }, 1000);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -148,14 +154,24 @@ const Chatbot = ({ selectedMeetingId, mode = "single" }: ChatbotProps) => {
 
     recognition.onerror = (event: ErrorEvent) => {
       console.error("Error en reconocimiento de voz:", event.error);
+      setMessages(prev => [
+        ...prev,
+        { type: "bot", content: "Hubo un problema con el reconocimiento de voz. Por favor, intenta nuevamente." }
+      ]);
       setIsListening(false);
-      setMessages(prev => [...prev, { 
-        type: "bot", 
-        content: "Lo siento, hubo un error con el reconocimiento de voz. Por favor, intenta de nuevo o usa el teclado."
-      }]);
+      setIsProcessingVoice(false);
     };
 
-    recognition.start();
+    if (isListening) {
+      recognition.abort(); // Detener cualquier instancia activa
+      setIsListening(false);
+      setIsProcessingVoice(true); // Mostrar loading al detener
+      setTimeout(() => {
+        setIsProcessingVoice(false);
+      }, 1000);
+    } else {
+      recognition.start();
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -225,7 +241,7 @@ const Chatbot = ({ selectedMeetingId, mode = "single" }: ChatbotProps) => {
         <div className="relative">
           <input
             type="text"
-            className="w-full px-4 py-2 pr-24 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 pr-24 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-white placeholder-gray-500"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -256,16 +272,24 @@ const Chatbot = ({ selectedMeetingId, mode = "single" }: ChatbotProps) => {
 
           {voiceSupported && (
             <button
-              className={`p-2 rounded-full ${
+              className={`p-2 rounded-full transition-all ${
                 isListening 
                   ? "bg-red-500 text-white" 
+                  : isProcessingVoice 
+                  ? "bg-yellow-500 text-white" 
                   : "bg-gray-300 hover:bg-gray-400"
-              } transition-all`}
+              }`}
               onClick={handleVoiceInput}
-              disabled={isLoading || isListening}
-              title={isListening ? "Detener grabación" : "Iniciar grabación de voz"}
+              disabled={isLoading || isListening || isProcessingVoice}
+              title={
+                isListening
+                  ? "Detener grabación"
+                  : isProcessingVoice
+                  ? "Procesando..."
+                  : "Iniciar grabación de voz"
+              }
             >
-              {isListening ? "🛑" : "🎤"}
+              {isListening ? "🛑" : isProcessingVoice ? "⏳" : "🎤"}
             </button>
           )}
         </div>
