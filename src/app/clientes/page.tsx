@@ -8,13 +8,16 @@ import Image from 'next/image';
 export default function ClientesPage() {
   return (
     <div
-      className="min-h-screen w-full relative"
       style={{
+        minHeight: '100vh',
+        width: '100%',
         backgroundImage: "url('/h6.jpeg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed"
+        backgroundAttachment: "fixed",
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
       <NavBar />
@@ -22,34 +25,33 @@ export default function ClientesPage() {
       <br />
       <br />
       <br />
-      <div className="container mx-auto px-4 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start max-w-7xl mx-auto">
-          {/* Columna izquierda para VoiceRecorder */}
-          <div className="w-full">
-            <div className="bg-black bg-opacity-20 backdrop-blur-sm rounded-lg p-6 shadow-xl border border-white/10">
+      {/* Main content container with proper spacing */}
+      <div className="flex-1 pt-16 px-4 md:px-8 mt-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Voice Recorder Section */}
+            <div 
+              className="w-full rounded-lg shadow-lg p-6"
+              style={{ backgroundColor: "rgba(0, 0, 0, 0.41)" }}
+            >
               <h2 className="text-2xl font-bold text-white mb-6 text-center">
                 Grabar Reunión
               </h2>
               <VoiceRecorder />
             </div>
-          </div>
-          <br />
-          {/* Columna derecha para TodoRecorder */}
-          <div className="w-full">
-            <div className="bg-black bg-opacity-20 backdrop-blur-sm rounded-lg p-6 shadow-xl border border-white/10">
-              <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                Grabar Tarea
-              </h2>
-              <TodoRecorder />
+
+            {/* Space for additional content if needed */}
+            <div className="w-full">
+              {/* You can add additional content here */}
             </div>
           </div>
-        </div>
 
-        {/* Leyenda o instrucciones generales */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-blue-900">
-            <br />
-          </p>
+          {/* Footer space if needed */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-white">
+              <br />
+            </p>
+          </div>
         </div>
       </div>
     </div>

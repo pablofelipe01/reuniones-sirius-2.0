@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "./globals.css";
 
@@ -9,16 +10,15 @@ export const metadata: Metadata = {
   title: "SIRIUS IA",
   description: "Asistente de Reunion con IA",
   icons: {
-    icon: "/favicon.ico", // Favicon for browsers
-    apple: "/apple-touch-icon.png", // Icon for iOS devices
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
 };
 
-// New export for viewport configuration
-export const generateViewport = () => ({
+export const viewport = {
   width: "device-width",
   initialScale: 1,
-});
+};
 
 export default function RootLayout({
   children,
@@ -26,8 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="es">
+      <body className={inter.className}>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
