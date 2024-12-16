@@ -19,12 +19,12 @@ const TodoRecorder: React.FC = () => {
     "Martin Herrera",
     "Pablo Acebedo",
     "David Hernández",
-    "Joys Fernanda Moreno",
+    "Joys Moreno",
     "Jerson Camilo Loaiza",
     "Luisa Fernanda Ramirez",
     "Santiago Amaya",
     "Alejandro Uricoechea",
-    "Lina Fernanda Loaiza"
+    "Lina Loaiza"
   ];
 
   const N8N_WEBHOOK_URL = "https://tok-n8n-sol.onrender.com/webhook/todo-sirius";
