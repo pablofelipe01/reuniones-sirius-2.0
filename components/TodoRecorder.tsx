@@ -16,12 +16,12 @@ const TodoRecorder: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
 
   const usuarios = [
-    "Martin Herrera",
+    "Martin",
     "Pablo Acebedo",
     "David Hernández",
     "Joys Moreno",
-    "Jerson Camilo Loaiza",
-    "Luisa Fernanda Ramirez",
+    "Jerson ",
+    "Luisa Ramirez",
     "Santiago Amaya",
     "Alejandro Uricoechea",
     "Lina Loaiza"
