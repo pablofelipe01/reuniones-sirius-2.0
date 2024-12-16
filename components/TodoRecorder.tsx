@@ -24,6 +24,7 @@ const TodoRecorder: React.FC = () => {
     "Luisa Fernanda Ramirez",
     "Santiago Amaya",
     "Alejandro Uricoechea",
+    "Lina Fernanda Loaiza"
   ];
 
   const N8N_WEBHOOK_URL = "https://tok-n8n-sol.onrender.com/webhook/todo-sirius";
